@@ -1,0 +1,1724 @@
+html_content = """<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер MS Excel: Реєстр вхідної кореспонденції</title>
+    <style>
+        :root {
+            --excel-green: #217346;
+            --excel-green-dark: #185abd;
+            --excel-green-light: #e6f4ea;
+            --excel-hover: #d3e8db;
+            --ribbon-bg: #f3f2f1;
+            --border-color: #d1d1d1;
+            --cell-border: #e0e0e0;
+            --selection-border: #217346;
+            --text-dark: #252423;
+            --text-muted: #605e5c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top App Header */
+        .app-header {
+            background-color: var(--excel-green);
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .file-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-safety {
+            background: #fff3cd;
+            color: #856404;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-safety:hover {
+            background: #ffeeba;
+        }
+
+        /* Main Layout */
+        .main-workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar: Instructions */
+        .guide-sidebar {
+            width: 390px;
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .progress-header {
+            padding: 12px 16px;
+            background: #f0f4f8;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: #dce1e7;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--excel-green);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .task-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .task-tab {
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .task-tab.active {
+            color: var(--excel-green);
+            border-bottom-color: var(--excel-green);
+            background: white;
+        }
+
+        .task-tab.completed {
+            color: #155724;
+            background: #e6f4ea;
+        }
+
+        .guide-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .task-card {
+            display: none;
+        }
+
+        .task-card.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--excel-green);
+            margin-bottom: 8px;
+        }
+
+        .task-rule {
+            background: #f1f8ff;
+            border-left: 3px solid #0366d6;
+            padding: 8px 10px;
+            font-size: 12.5px;
+            margin-bottom: 12px;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.4;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.45;
+            background: #fafafa;
+            border: 1px solid #eeeeee;
+            transition: all 0.2s;
+        }
+
+        .step-item.done {
+            background: #e6f4ea;
+            border-color: #b7dfb9;
+            color: #155724;
+        }
+
+        .step-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #adb5bd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            background: white;
+        }
+
+        .step-item.done .step-check {
+            background: var(--excel-green);
+            border-color: var(--excel-green);
+            color: white;
+        }
+
+        .code-pill {
+            background: #e9ecef;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            color: #c7254e;
+            font-weight: 600;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 11.5px;
+        }
+
+        .mini-table th, .mini-table td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            text-align: left;
+        }
+
+        .mini-table th {
+            background: #e9ecef;
+        }
+
+        .guide-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .btn:hover {
+            background: #e9ecef;
+        }
+
+        .btn-primary {
+            background: var(--excel-green);
+            color: white;
+            border-color: var(--excel-green);
+        }
+
+        .btn-primary:hover {
+            background: #1a5c38;
+        }
+
+        .btn-hint {
+            background: #fff8e1;
+            border-color: #ffe082;
+            color: #795548;
+        }
+
+        /* Right Side: Excel Interface */
+        .excel-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: white;
+        }
+
+        /* Ribbon */
+        .ribbon-tabs {
+            display: flex;
+            background: var(--excel-green);
+            padding: 0 12px;
+        }
+
+        .ribbon-tab {
+            padding: 6px 16px;
+            color: rgba(255,255,255,0.85);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 2px;
+        }
+
+        .ribbon-tab.active {
+            background: var(--ribbon-bg);
+            color: var(--excel-green);
+            font-weight: 600;
+        }
+
+        .ribbon-panel {
+            background: var(--ribbon-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 12px;
+            min-height: 76px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ribbon-panel.active {
+            display: flex;
+        }
+
+        .ribbon-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid #d8d8d8;
+            padding-right: 12px;
+            height: 60px;
+            justify-content: space-between;
+        }
+
+        .ribbon-group:last-child {
+            border-right: none;
+        }
+
+        .ribbon-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .ribbon-group-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dark);
+            white-space: nowrap;
+        }
+
+        .tool-btn:hover {
+            background: #e1dfdd;
+            border-color: #c8c6c4;
+        }
+
+        .tool-btn.active-tool {
+            background: #cce3d6;
+            border-color: var(--excel-green);
+            color: var(--excel-green);
+            font-weight: 600;
+        }
+
+        select.tool-select {
+            padding: 3px 6px;
+            border: 1px solid #c8c6c4;
+            border-radius: 3px;
+            font-size: 12px;
+            background: white;
+        }
+
+        /* Formula Bar */
+        .formula-bar {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            gap: 6px;
+        }
+
+        .name-box {
+            width: 70px;
+            padding: 3px 6px;
+            border: 1px solid #c8c6c4;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            background: #fafafa;
+        }
+
+        .fx-label {
+            font-family: Georgia, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: var(--text-muted);
+            padding: 0 6px;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .formula-input {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-family: Consolas, monospace;
+            outline: none;
+        }
+
+        .formula-input:focus {
+            border-color: var(--excel-green);
+        }
+
+        /* Grid Area */
+        .grid-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #e6e6e6;
+        }
+
+        table.excel-grid {
+            border-collapse: collapse;
+            background: white;
+            table-layout: fixed;
+            user-select: none;
+        }
+
+        .excel-grid th {
+            background: #f3f2f1;
+            border: 1px solid #c8c6c4;
+            font-weight: 600;
+            font-size: 12px;
+            color: #484644;
+            height: 24px;
+            position: relative;
+        }
+
+        .excel-grid th.row-header {
+            width: 40px;
+            text-align: center;
+            position: sticky;
+            left: 0;
+            z-index: 3;
+        }
+
+        .excel-grid th.col-header {
+            position: sticky;
+            top: 0;
+            z-index: 4;
+        }
+
+        .excel-grid th.corner-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 5;
+        }
+
+        .col-resizer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+        }
+
+        .col-resizer:hover {
+            background: var(--excel-green);
+        }
+
+        .excel-grid td {
+            border: 1px solid var(--cell-border);
+            height: 28px;
+            padding: 2px 6px;
+            font-size: 13px;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            background: white;
+        }
+
+        .excel-grid td.wrap-text {
+            white-space: normal;
+            height: auto;
+            min-height: 36px;
+            line-height: 1.25;
+        }
+
+        .excel-grid td.all-borders {
+            border: 1px solid #333333 !important;
+        }
+
+        .excel-grid td.selected {
+            background-color: rgba(33, 115, 70, 0.08) !important;
+        }
+
+        .excel-grid td.active-cell {
+            outline: 2px solid var(--excel-green);
+            outline-offset: -2px;
+            z-index: 2;
+        }
+
+        .fill-handle {
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            width: 7px;
+            height: 7px;
+            background: var(--excel-green);
+            border: 1px solid white;
+            cursor: crosshair;
+            z-index: 6;
+        }
+
+        .cell-editor {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--excel-green);
+            padding: 2px 5px;
+            font-size: 13px;
+            outline: none;
+            z-index: 10;
+            font-family: inherit;
+        }
+
+        /* Frozen row support */
+        .frozen-row td, .frozen-row th {
+            position: sticky;
+            top: 24px;
+            z-index: 3;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.12);
+        }
+
+        /* Filter dropdown */
+        .filter-arrow {
+            float: right;
+            background: #e1dfdd;
+            border: 1px solid #8a8886;
+            border-radius: 2px;
+            padding: 0 4px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+
+        .filter-arrow.filtered {
+            background: var(--excel-green);
+            color: white;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--excel-green);
+            color: white;
+            padding: 3px 12px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 6px;
+            width: 420px;
+            max-width: 92%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: var(--excel-green);
+            color: white;
+            padding: 10px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 16px;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            padding: 10px 16px;
+            background: #f3f2f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 12.5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            right: 20px;
+            background: #252423;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 200;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Header -->
+    <div class="app-header">
+        <div class="app-title">
+            <span>📊 MS Excel Тренажер</span>
+            <span class="file-badge" id="fileNameBadge">Реєстр_вхідної_кореспонденції_2026.xlsx</span>
+        </div>
+        <div class="header-controls">
+            <button class="btn-safety" onclick="openModal('safetyModal')">🦺 Охорона праці</button>
+            <button class="btn" style="padding: 4px 10px; font-size: 12px;" onclick="autoFillDemoData()">⚡ Заповнити зразок</button>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="main-workspace">
+        <!-- Left Sidebar: Instructional Card -->
+        <aside class="guide-sidebar">
+            <div class="progress-header">
+                <div class="progress-info">
+                    <span>Виконання практичної роботи</span>
+                    <span id="progressText">0% (0/14)</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="task-tabs" id="taskTabs">
+                <div class="task-tab active" onclick="switchTask(1)">Завд. 1</div>
+                <div class="task-tab" onclick="switchTask(2)">Завд. 2</div>
+                <div class="task-tab" onclick="switchTask(3)">Завд. 3</div>
+                <div class="task-tab" onclick="switchTask(4)">Завд. 4</div>
+                <div class="task-tab" onclick="switchTask(5)">Завд. 5</div>
+                <div class="task-tab" onclick="switchTask(6)">Завд. 6</div>
+            </div>
+
+            <div class="guide-content">
+                <!-- Task 1 -->
+                <div class="task-card active" id="task-1">
+                    <div class="task-title">📌 Завдання 1. Побудова структури та форматування шапки</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Заголовок таблиці розташовується по центру відносно всієї ширини таблиці за допомогою об'єднання клітинок. Заголовки стовпців — жирним із заливкою.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-1-1">
+                            <div class="step-check">✓</div>
+                            <div>У клітинку <span class="code-pill">A1</span> введіть великими літерами:<br><strong>РЕЄСТР ВХІДНОЇ КОРЕСПОНДЕНЦІЇ СЕКРЕТАРЯ</strong></div>
+                        </li>
+                        <li class="step-item" id="step-1-2">
+                            <div class="step-check">✓</div>
+                            <div>Виділіть діапазон <span class="code-pill">A1:F1</span> ➔ вкладка <strong>«Основне»</strong> ➔ <strong>«Об'єднати та розташувати в центрі»</strong>.</div>
+                        </li>
+                        <li class="step-item" id="step-1-3">
+                            <div class="step-check">✓</div>
+                            <div>У рядок 3 (<span class="code-pill">A3:F3</span>) введіть заголовки стовпців:<br>
+                                <strong>A3:</strong> № з/п<br>
+                                <strong>B3:</strong> Дата надходження<br>
+                                <strong>C3:</strong> Кореспондент (Організація)<br>
+                                <strong>D3:</strong> Короткий зміст<br>
+                                <strong>E3:</strong> Кількість документів<br>
+                                <strong>F3:</strong> Статус виконання
+                            </div>
+                        </li>
+                        <li class="step-item" id="step-1-4">
+                            <div class="step-check">✓</div>
+                            <div>Виділіть <span class="code-pill">A3:F3</span> ➔ застосуйте <strong>Жирний (Ж)</strong>, <strong>Колір заливки</strong>, <strong>Переносити текст</strong> та межі <strong>«Усі межі»</strong>.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Task 2 -->
+                <div class="task-card" id="task-2">
+                    <div class="task-title">📌 Завдання 2. Введення даних, формат дат та автопідбір ширини</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Дати вводяться у форматі ДД.ММ.РРРР. Назви організацій — згідно з єдиним стандартом.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-2-1">
+                            <div class="step-check">✓</div>
+                            <div>Уведіть у рядки <span class="code-pill">4–7</span> дані таблиці:
+                                <table class="mini-table">
+                                    <tr><th>Ряд</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+                                    <tr><td>4</td><td>1</td><td>20.09.2026</td><td>ТОВ «Техно-Сервіс»</td><td>Акт виконаних робіт</td><td>1</td></tr>
+                                    <tr><td>5</td><td>2</td><td>22.09.2026</td><td>ПАТ «КиївЕнерго»</td><td>Договір постачання</td><td>4</td></tr>
+                                    <tr><td>6</td><td>3</td><td>24.09.2026</td><td>Департамент освіти</td><td>Запит про звітність</td><td>3</td></tr>
+                                    <tr><td>7</td><td>4</td><td>25.09.2026</td><td>Міський Архів</td><td>Лист-довідка</td><td>2</td></tr>
+                                </table>
+                            </div>
+                        </li>
+                        <li class="step-item" id="step-2-2">
+                            <div class="step-check">✓</div>
+                            <div>Виділіть <span class="code-pill">B4:B7</span> ➔ вкладка «Основне» ➔ Числовий формат ➔ оберіть <strong>«Дата (14.03.2012)»</strong>.</div>
+                        </li>
+                        <li class="step-item" id="step-2-3">
+                            <div class="step-check">✓</div>
+                            <div>Виконайте <strong>Автопідбір ширини</strong> стовпців (двічі клацніть на межі між заголовками стовпців угорі або натисніть кнопку «Автопідбір ширини» на стрічці).</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Task 3 -->
+                <div class="task-card" id="task-3">
+                    <div class="task-title">📌 Завдання 3. Автоматизація підсумків функцією СУМ (SUM)</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Будь-яка формула починається зі знака <span class="code-pill">=</span>. Неприпустимо підраховувати суму вручну.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-3-1">
+                            <div class="step-check">✓</div>
+                            <div>У клітинку <span class="code-pill">D8</span> введіть текст: <strong>РАЗОМ ДОКУМЕНТІВ:</strong> (зробіть жирним та вирівняйте по правому краю).</div>
+                        </li>
+                        <li class="step-item" id="step-3-2">
+                            <div class="step-check">✓</div>
+                            <div>У клітинку <span class="code-pill">E8</span> введіть формулу:<br><span class="code-pill">=СУМ(E4:E7)</span> (або <span class="code-pill">=SUM(E4:E7)</span>) та натисніть <strong>Enter</strong>. Має відобразитися результат <strong>10</strong>.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Task 4 -->
+                <div class="task-card" id="task-4">
+                    <div class="task-title">📌 Завдання 4. Логічна функція ЯКЩО (IF) для контролю статусу</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Текстові значення всередині формули ЯКЩО обов'язково беруться в подвійні лапки <span class="code-pill">""</span>.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-4-1">
+                            <div class="step-check">✓</div>
+                            <div>У клітинку <span class="code-pill">F4</span> введіть формулу:<br><span class="code-pill">=ЯКЩО(B4&lt;=СЬОГОДНІ();"Прострочено";"Вчасно")</span><br>або <span class="code-pill">=ЯКЩО(E4&gt;2;"Контроль";"Звичайний")</span> та натисніть <strong>Enter</strong>.</div>
+                        </li>
+                        <li class="step-item" id="step-4-2">
+                            <div class="step-check">✓</div>
+                            <div>Протягніть <strong>маркер заповнення</strong> (зелений квадратик у правому нижньому куті клітинки <span class="code-pill">F4</span>) униз до клітинки <span class="code-pill">F7</span>.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Task 5 -->
+                <div class="task-card" id="task-5">
+                    <div class="task-title">📌 Завдання 5. Умовне форматування для прострочених документів</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Умовне форматування змінює колір клітинки автоматично без втручання секретаря.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-5-1">
+                            <div class="step-check">✓</div>
+                            <div>Виділіть діапазон зі статусами <span class="code-pill">F4:F7</span> ➔ вкладка <strong>«Основне»</strong> ➔ натисніть <strong>«Умовне форматування»</strong> ➔ введіть слово <strong>Прострочено</strong> (або <strong>Контроль</strong>) та оберіть світло-червону заливку.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Task 6 -->
+                <div class="task-card" id="task-6">
+                    <div class="task-title">📌 Завдання 6. Фільтрація даних та Закріплення областей</div>
+                    <div class="task-rule">
+                        <strong>Правило:</strong> Перед увімкненням фільтра виділіть шапку таблиці, щоб не втратити зв'язок між рядками.
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item" id="step-6-1">
+                            <div class="step-check">✓</div>
+                            <div>Виділіть шапку <span class="code-pill">A3:F3</span> ➔ вкладка <strong>«Дані»</strong> ➔ натисніть кнопку <strong>«Фільтр»</strong>.</div>
+                        </li>
+                        <li class="step-item" id="step-6-2">
+                            <div class="step-check">✓</div>
+                            <div>Натисніть стрілочку у стовпці <strong>C (Кореспондент)</strong>, залиште галочку лише навпроти <strong>Департамент освіти</strong>, натисніть ОК, а потім очистіть фільтр.</div>
+                        </li>
+                        <li class="step-item" id="step-6-3">
+                            <div class="step-check">✓</div>
+                            <div>Перейдіть на вкладку <strong>«Вигляд»</strong> ➔ натисніть <strong>«Закріпити області»</strong> (по рядку 3) та натисніть <strong>«Зберегти файл»</strong>.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-footer">
+                <button class="btn btn-hint" onclick="showHint()">💡 Підказка</button>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn" onclick="prevTask()">◀ Назад</button>
+                    <button class="btn btn-primary" onclick="nextTask()">Далі ▶</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Side: Excel Simulator -->
+        <main class="excel-container">
+            <!-- Ribbon Tabs -->
+            <div class="ribbon-tabs">
+                <div class="ribbon-tab active" onclick="switchRibbon('home', this)">Основне</div>
+                <div class="ribbon-tab" onclick="switchRibbon('data', this)">Дані</div>
+                <div class="ribbon-tab" onclick="switchRibbon('view', this)">Вигляд</div>
+            </div>
+
+            <!-- Ribbon: Home -->
+            <div class="ribbon-panel active" id="ribbon-home">
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <button class="tool-btn" onclick="toggleBold()" title="Жирний"><strong>Ж</strong></button>
+                        <select class="tool-select" id="fillColorSelect" onchange="applyFillColor(this.value)" title="Колір заливки">
+                            <option value="">🎨 Заливка...</option>
+                            <option value="#d9ead3">Світло-зелений</option>
+                            <option value="#e9ecef">Світло-сірий</option>
+                            <option value="#fff2cc">Світло-жовтий</option>
+                            <option value="#ffffff">Без заливки</option>
+                        </select>
+                        <button class="tool-btn" onclick="applyAllBorders()" title="Усі межі">田 Усі межі</button>
+                    </div>
+                    <div class="ribbon-group-label">Шрифт</div>
+                </div>
+
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <button class="tool-btn" onclick="alignRight()" title="Вирівняти за правим краєм">⇥ Праворуч</button>
+                        <button class="tool-btn" onclick="toggleWrapText()" title="Переносити текст">↩ Переносити текст</button>
+                        <button class="tool-btn" onclick="mergeAndCenter()" title="Об'єднати та розташувати в центрі">⬌ Об'єднати та в центрі</button>
+                    </div>
+                    <div class="ribbon-group-label">Вирівнювання</div>
+                </div>
+
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <select class="tool-select" id="numberFormatSelect" onchange="applyNumberFormat(this.value)">
+                            <option value="general">Загальний</option>
+                            <option value="date">Дата (14.03.2012)</option>
+                            <option value="number">Числовий</option>
+                        </select>
+                    </div>
+                    <div class="ribbon-group-label">Число</div>
+                </div>
+
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <button class="tool-btn" onclick="openModal('condFormatModal')">🚦 Умовне форматування</button>
+                        <button class="tool-btn" onclick="autoFitColumns()">↔ Автопідбір ширини</button>
+                    </div>
+                    <div class="ribbon-group-label">Стилі та Клітинки</div>
+                </div>
+            </div>
+
+            <!-- Ribbon: Data -->
+            <div class="ribbon-panel" id="ribbon-data">
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <button class="tool-btn" id="filterBtn" onclick="toggleFilter()">🌪️ Фільтр</button>
+                        <button class="tool-btn" onclick="sortColumn('asc')">🔤 Сортувати А-Я</button>
+                    </div>
+                    <div class="ribbon-group-label">Сортування й фільтр</div>
+                </div>
+            </div>
+
+            <!-- Ribbon: View -->
+            <div class="ribbon-panel" id="ribbon-view">
+                <div class="ribbon-group">
+                    <div class="ribbon-buttons">
+                        <button class="tool-btn" id="freezeBtn" onclick="toggleFreeze()">❄️ Закріпити області (рядок 3)</button>
+                        <button class="tool-btn" onclick="saveWorkbook()">💾 Зберегти файл</button>
+                    </div>
+                    <div class="ribbon-group-label">Вікно та Файл</div>
+                </div>
+            </div>
+
+            <!-- Formula Bar -->
+            <div class="formula-bar">
+                <div class="name-box" id="nameBox">A1</div>
+                <div class="fx-label">fx</div>
+                <input type="text" class="formula-input" id="formulaInput" placeholder="Введіть значення або формулу (наприклад, =СУМ(E4:E7))...">
+            </div>
+
+            <!-- Grid Wrapper -->
+            <div class="grid-wrapper" id="gridWrapper">
+                <table class="excel-grid" id="excelGrid"></table>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="statusMessage">Готово до роботи. Оберіть клітинку та виконайте інструкції ліворуч.</span>
+                <span>Аркуш1 | 100%</span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Conditional Formatting -->
+    <div class="modal-overlay" id="condFormatModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Умовне форматування: Текст, що містить...</span>
+                <span style="cursor:pointer;" onclick="closeModal('condFormatModal')">✖</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 10px; color: #555;">Форматувати клітинки в обраному діапазоні, які містять текст:</p>
+                <div class="form-group">
+                    <label>Текст для пошуку:</label>
+                    <input type="text" id="cfText" value="Прострочено" placeholder="Прострочено або Контроль">
+                </div>
+                <div class="form-group">
+                    <label>Стиль виділення:</label>
+                    <select id="cfStyle">
+                        <option value="red">Світло-червона заливка та темно-червоний текст</option>
+                        <option value="yellow">Жовта заливка та темно-жовтий текст</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('condFormatModal')">Скасувати</button>
+                <button class="btn btn-primary" onclick="applyConditionalFormatting()">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Filter -->
+    <div class="modal-overlay" id="filterModal">
+        <div class="modal-box" style="width: 340px;">
+            <div class="modal-header">
+                <span>Фільтр: Кореспондент (Організація)</span>
+                <span style="cursor:pointer;" onclick="closeModal('filterModal')">✖</span>
+            </div>
+            <div class="modal-body" id="filterOptionsList"></div>
+            <div class="modal-footer">
+                <button class="btn" onclick="clearFilter()">Очистити фільтр</button>
+                <button class="btn btn-primary" onclick="applyFilterSelection()">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Safety -->
+    <div class="modal-overlay" id="safetyModal">
+        <div class="modal-box" style="width: 480px;">
+            <div class="modal-header">
+                <span>🦺 Вимоги охорони праці під час роботи за ПК</span>
+                <span style="cursor:pointer;" onclick="closeModal('safetyModal')">✖</span>
+            </div>
+            <div class="modal-body">
+                <ul style="padding-left: 18px; line-height: 1.6;">
+                    <li>Відстань від очей до екрана монітора має становити <strong>50–70 см</strong>.</li>
+                    <li>Спина повинна спиратися на спинку стільця, ноги — стояти всією стопою на підлозі.</li>
+                    <li>Заборонено торкатися дротів живлення та роз'ємів на задній панелі системного блока.</li>
+                    <li>Кожні <strong>45–50 хвилин</strong> роботи робіть перерву на 5–10 хвилин та виконуйте гімнастику для очей.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('safetyModal')">Ознайомлений(-а)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Completion -->
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal-box" style="width: 460px;">
+            <div class="modal-header">
+                <span>🎉 Вітаємо! Практичну роботу виконано!</span>
+                <span style="cursor:pointer;" onclick="closeModal('completeModal')">✖</span>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 10px;">🏆</div>
+                <p style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">Ви успішно створили та налаштували «Реєстр вхідної кореспонденції» в MS Excel!</p>
+                <p style="color: #555; font-size: 13px;">Усі 6 завдань інструкційно-технологічної картки виконано без помилок: структура шапки, формат дат, формули СУМ та ЯКЩО, умовне форматування, фільтрація та закріплення областей.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('completeModal')">Чудово!</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+        const ROWS = 14;
+        const defaultWidths = { A: 75, B: 130, C: 185, D: 185, E: 140, F: 140, G: 90 };
+
+        let cells = {};
+        let mergedA1F1 = false;
+        let filterEnabled = false;
+        let activeFilterValues = null;
+        let wasFilteredOnce = false;
+        let wasFilterCleared = false;
+        let frozenRow3 = false;
+        let savedFile = false;
+        let cfRule = null;
+
+        let selection = { startR: 1, startC: 0, endR: 1, endC: 0 };
+        let isDragging = false;
+        let isFillDragging = false;
+        let currentTask = 1;
+        let completedSteps = new Set();
+
+        function initGrid() {
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 0; c < COLS.length; c++) {
+                    const id = COLS[c] + r;
+                    cells[id] = {
+                        raw: '',
+                        val: '',
+                        bold: false,
+                        bg: '',
+                        align: 'left',
+                        wrap: false,
+                        border: false,
+                        numFormat: 'general'
+                    };
+                }
+            }
+            renderGrid();
+            selectCell(1, 0);
+        }
+
+        function renderGrid() {
+            const table = document.getElementById('excelGrid');
+            table.innerHTML = '';
+
+            // Header row
+            const thead = document.createElement('thead');
+            const trHead = document.createElement('tr');
+            const corner = document.createElement('th');
+            corner.className = 'corner-header';
+            trHead.appendChild(corner);
+
+            COLS.forEach((col, cIdx) => {
+                const th = document.createElement('th');
+                th.className = 'col-header';
+                th.style.width = defaultWidths[col] + 'px';
+                th.textContent = col;
+
+                const resizer = document.createElement('div');
+                resizer.className = 'col-resizer';
+                resizer.ondblclick = (e) => {
+                    e.stopPropagation();
+                    autoFitColumns();
+                };
+                th.appendChild(resizer);
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+
+            // Body rows
+            const tbody = document.createElement('tbody');
+            for (let r = 1; r <= ROWS; r++) {
+                // Check filter visibility for rows 4..7
+                if (activeFilterValues && r >= 4 && r <= 7) {
+                    const orgVal = String(cells['C' + r].val || '').trim();
+                    if (!activeFilterValues.includes(orgVal)) {
+                        continue;
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                if (frozenRow3 && r === 3) {
+                    tr.classList.add('frozen-row');
+                }
+
+                const rowTh = document.createElement('th');
+                rowTh.className = 'row-header';
+                rowTh.textContent = r;
+                tr.appendChild(rowTh);
+
+                for (let c = 0; c < COLS.length; c++) {
+                    if (mergedA1F1 && r === 1 && c > 0 && c <= 5) continue;
+
+                    const id = COLS[c] + r;
+                    const cell = cells[id];
+                    const td = document.createElement('td');
+                    td.dataset.r = r;
+                    td.dataset.c = c;
+                    td.id = 'cell-' + id;
+
+                    if (mergedA1F1 && r === 1 && c === 0) {
+                        td.colSpan = 6;
+                        td.style.textAlign = 'center';
+                        td.style.fontWeight = 'bold';
+                        td.style.fontSize = '14px';
+                        td.style.background = '#e6f4ea';
+                    }
+
+                    // Apply styles
+                    if (cell.bold) td.style.fontWeight = 'bold';
+                    if (cell.bg) td.style.backgroundColor = cell.bg;
+                    if (cell.align && !(mergedA1F1 && r === 1 && c === 0)) td.style.textAlign = cell.align;
+                    if (cell.wrap) td.classList.add('wrap-text');
+                    if (cell.border) td.classList.add('all-borders');
+
+                    // Apply Conditional Formatting
+                    if (cfRule && r >= 4 && r <= 7 && c === 5) {
+                        const textVal = String(cell.val || '');
+                        if (cfRule.text && textVal.toLowerCase().includes(cfRule.text.toLowerCase())) {
+                            if (cfRule.style === 'red') {
+                                td.style.backgroundColor = '#ffc7ce';
+                                td.style.color = '#9c0006';
+                                td.style.fontWeight = '600';
+                            } else {
+                                td.style.backgroundColor = '#ffeb9c';
+                                td.style.color = '#9c6500';
+                            }
+                        }
+                    }
+
+                    // Display text
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = cell.val;
+                    td.appendChild(textSpan);
+
+                    // Filter arrow on row 3
+                    if (filterEnabled && r === 3 && c <= 5) {
+                        const arrow = document.createElement('span');
+                        arrow.className = 'filter-arrow' + (activeFilterValues && c === 2 ? ' filtered' : '');
+                        arrow.textContent = '▼';
+                        arrow.onclick = (e) => {
+                            e.stopPropagation();
+                            if (c === 2) openFilterModal();
+                            else showToast('Згідно з інструкцією натисніть стрілочку у стовпці C (Кореспондент).');
+                        };
+                        td.appendChild(arrow);
+                    }
+
+                    // Selection highlight
+                    const minR = Math.min(selection.startR, selection.endR);
+                    const maxR = Math.max(selection.startR, selection.endR);
+                    const minC = Math.min(selection.startC, selection.endC);
+                    const maxC = Math.max(selection.startC, selection.endC);
+
+                    if (r >= minR && r <= maxR && c >= minC && c <= maxC) {
+                        td.classList.add('selected');
+                    }
+
+                    if (r === selection.startR && c === selection.startC) {
+                        td.classList.add('active-cell');
+                        const handle = document.createElement('div');
+                        handle.className = 'fill-handle';
+                        handle.onmousedown = (e) => {
+                            e.stopPropagation();
+                            isFillDragging = true;
+                        };
+                        td.appendChild(handle);
+                    }
+
+                    td.onmousedown = () => {
+                        isDragging = true;
+                        selectCell(r, c);
+                    };
+
+                    td.onmouseenter = () => {
+                        if (isDragging) {
+                            selection.endR = r;
+                            selection.endC = c;
+                            renderGrid();
+                        } else if (isFillDragging) {
+                            selection.endR = r;
+                            selection.endC = c;
+                            renderGrid();
+                        }
+                    };
+
+                    td.ondblclick = () => startEditing(r, c);
+
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+        }
+
+        document.addEventListener('mouseup', () => {
+            if (isFillDragging) {
+                performAutoFill();
+            }
+            isDragging = false;
+            isFillDragging = false;
+        });
+
+        function selectCell(r, c) {
+            selection = { startR: r, startC: c, endR: r, endC: c };
+            const id = COLS[c] + r;
+            document.getElementById('nameBox').textContent = id;
+            document.getElementById('formulaInput').value = cells[id].raw;
+            renderGrid();
+        }
+
+        function startEditing(r, c) {
+            const id = COLS[c] + r;
+            const td = document.getElementById('cell-' + id);
+            if (!td) return;
+
+            const input = document.createElement('input');
+            input.className = 'cell-editor';
+            input.value = cells[id].raw;
+            td.appendChild(input);
+            input.focus();
+
+            const commit = () => {
+                setCellValue(id, input.value);
+                renderGrid();
+            };
+
+            input.onblur = commit;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commit();
+                    if (r < ROWS) selectCell(r + 1, c);
+                } else if (e.key === 'Escape') {
+                    renderGrid();
+                }
+            };
+        }
+
+        document.getElementById('formulaInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const id = COLS[selection.startC] + selection.startR;
+                setCellValue(id, e.target.value);
+                renderGrid();
+                if (selection.startR < ROWS) selectCell(selection.startR + 1, selection.startC);
+            }
+        });
+
+        function setCellValue(id, rawInput) {
+            cells[id].raw = rawInput;
+            recalculateAll();
+            checkProgress();
+        }
+
+        function recalculateAll() {
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 0; c < COLS.length; c++) {
+                    const id = COLS[c] + r;
+                    const raw = String(cells[id].raw || '').trim();
+                    if (raw.startsWith('=')) {
+                        cells[id].val = evaluateFormula(raw, r);
+                    } else {
+                        cells[id].val = raw;
+                    }
+                }
+            }
+        }
+
+        function parseUkrDate(str) {
+            const m = String(str).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+            if (!m) return null;
+            return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+        }
+
+        function evaluateFormula(formula, row) {
+            const f = formula.toUpperCase().replace(/\s+/g, '');
+
+            // SUM / СУМ
+            const sumMatch = f.match(/^=(?:СУМ|СУММ|SUM)\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)$/);
+            if (sumMatch) {
+                const col = sumMatch[1];
+                const r1 = parseInt(sumMatch[2]);
+                const r2 = parseInt(sumMatch[4]);
+                let total = 0;
+                for (let r = r1; r <= r2; r++) {
+                    const num = parseFloat(String(cells[col + r]?.val || '0').replace(',', '.'));
+                    if (!isNaN(num)) total += num;
+                }
+                return total;
+            }
+
+            // IF / ЯКЩО with TODAY() / СЬОГОДНІ()
+            const ifDateMatch = formula.match(/^=\s*(?:ЯКЩО|IF)\s*\(\s*([A-Z]\d+)\s*(<=|<|>=|>|=)\s*(?:СЬОГОДНІ|TODAY)\(\)\s*[;,]\s*"([^"]+)"\s*[;,]\s*"([^"]+)"\s*\)$/i);
+            if (ifDateMatch) {
+                const refCell = ifDateMatch[1].toUpperCase();
+                const op = ifDateMatch[2];
+                const trueText = ifDateMatch[3];
+                const falseText = ifDateMatch[4];
+                const cellDate = parseUkrDate(cells[refCell]?.val);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                if (!cellDate) return '#ЗНАЧ!';
+                let cond = false;
+                if (op === '<=') cond = cellDate <= today;
+                if (op === '<') cond = cellDate < today;
+                if (op === '>=') cond = cellDate >= today;
+                if (op === '>') cond = cellDate > today;
+                return cond ? trueText : falseText;
+            }
+
+            // IF / ЯКЩО numeric comparison (e.g. =ЯКЩО(E4>2;"Контроль";"Звичайний"))
+            const ifNumMatch = formula.match(/^=\s*(?:ЯКЩО|IF)\s*\(\s*([A-Z]\d+)\s*(<=|<|>=|>|=)\s*(\d+(?:[.,]\d+)?)\s*[;,]\s*"([^"]+)"\s*[;,]\s*"([^"]+)"\s*\)$/i);
+            if (ifNumMatch) {
+                const refCell = ifNumMatch[1].toUpperCase();
+                const op = ifNumMatch[2];
+                const threshold = parseFloat(ifNumMatch[3].replace(',', '.'));
+                const trueText = ifNumMatch[4];
+                const falseText = ifNumMatch[5];
+                const num = parseFloat(String(cells[refCell]?.val || '0').replace(',', '.'));
+
+                let cond = false;
+                if (op === '>') cond = num > threshold;
+                if (op === '>=') cond = num >= threshold;
+                if (op === '<') cond = num < threshold;
+                if (op === '<=') cond = num <= threshold;
+                if (op === '=') cond = num === threshold;
+                return cond ? trueText : falseText;
+            }
+
+            return '#ПОМИЛКА!';
+        }
+
+        function performAutoFill() {
+            const startId = COLS[selection.startC] + selection.startR;
+            const sourceRaw = cells[startId].raw;
+            const minR = Math.min(selection.startR, selection.endR);
+            const maxR = Math.max(selection.startR, selection.endR);
+
+            for (let r = minR; r <= maxR; r++) {
+                if (r === selection.startR) continue;
+                const targetId = COLS[selection.startC] + r;
+                // Adjust row references in formula
+                const adjusted = sourceRaw.replace(/([A-Z]+)(\d+)/gi, (match, col, rowNum) => {
+                    if (parseInt(rowNum) === selection.startR) {
+                        return col + r;
+                    }
+                    return match;
+                });
+                cells[targetId].raw = adjusted;
+            }
+            recalculateAll();
+            renderGrid();
+            checkProgress();
+            showToast('Автозаповнення виконано!');
+        }
+
+        function getSelectedCells() {
+            const list = [];
+            const minR = Math.min(selection.startR, selection.endR);
+            const maxR = Math.max(selection.startR, selection.endR);
+            const minC = Math.min(selection.startC, selection.endC);
+            const maxC = Math.max(selection.startC, selection.endC);
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    list.push(COLS[c] + r);
+                }
+            }
+            return list;
+        }
+
+        function toggleBold() {
+            getSelectedCells().forEach(id => cells[id].bold = !cells[id].bold);
+            renderGrid();
+            checkProgress();
+        }
+
+        function applyFillColor(color) {
+            if (!color) return;
+            getSelectedCells().forEach(id => cells[id].bg = color === '#ffffff' ? '' : color);
+            document.getElementById('fillColorSelect').value = '';
+            renderGrid();
+            checkProgress();
+        }
+
+        function applyAllBorders() {
+            getSelectedCells().forEach(id => cells[id].border = true);
+            renderGrid();
+            checkProgress();
+        }
+
+        function alignRight() {
+            getSelectedCells().forEach(id => cells[id].align = 'right');
+            renderGrid();
+            checkProgress();
+        }
+
+        function toggleWrapText() {
+            getSelectedCells().forEach(id => cells[id].wrap = !cells[id].wrap);
+            renderGrid();
+            checkProgress();
+        }
+
+        function mergeAndCenter() {
+            const minC = Math.min(selection.startC, selection.endC);
+            const maxC = Math.max(selection.startC, selection.endC);
+            if (selection.startR === 1 && selection.endR === 1 && minC === 0 && maxC === 5) {
+                mergedA1F1 = true;
+                showToast('Діапазон A1:F1 об’єднано та розташовано по центру!');
+                renderGrid();
+                checkProgress();
+            } else {
+                showToast('Виділіть діапазон A1:F1 для об’єднання заголовка.');
+            }
+        }
+
+        function applyNumberFormat(fmt) {
+            getSelectedCells().forEach(id => cells[id].numFormat = fmt);
+            showToast('Числовий формат застосовано.');
+            checkProgress();
+        }
+
+        function autoFitColumns() {
+            defaultWidths.A = 75;
+            defaultWidths.B = 145;
+            defaultWidths.C = 215;
+            defaultWidths.D = 210;
+            defaultWidths.E = 155;
+            defaultWidths.F = 160;
+            renderGrid();
+            showToast('Автопідбір ширини стовпців виконано!');
+            checkProgress();
+        }
+
+        function applyConditionalFormatting() {
+            const text = document.getElementById('cfText').value.trim();
+            const style = document.getElementById('cfStyle').value;
+            cfRule = { text, style };
+            closeModal('condFormatModal');
+            renderGrid();
+            showToast('Правило умовного форматування застосовано!');
+            checkProgress();
+        }
+
+        function toggleFilter() {
+            filterEnabled = !filterEnabled;
+            document.getElementById('filterBtn').classList.toggle('active-tool', filterEnabled);
+            if (!filterEnabled) activeFilterValues = null;
+            renderGrid();
+            checkProgress();
+        }
+
+        function openFilterModal() {
+            const orgs = ['ТОВ «Техно-Сервіс»', 'ПАТ «КиївЕнерго»', 'Департамент освіти', 'Міський Архів'];
+            const container = document.getElementById('filterOptionsList');
+            container.innerHTML = orgs.map(org => `
+                <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">
+                    <input type="checkbox" class="filter-cb" value="${org}" ${!activeFilterValues || activeFilterValues.includes(org) ? 'checked' : ''}>
+                    <span>${org}</span>
+                </label>
+            `).join('');
+            openModal('filterModal');
+        }
+
+        function applyFilterSelection() {
+            const checked = Array.from(document.querySelectorAll('.filter-cb:checked')).map(cb => cb.value);
+            activeFilterValues = checked;
+            if (checked.length === 1 && checked[0] === 'Департамент освіти') {
+                wasFilteredOnce = true;
+            }
+            closeModal('filterModal');
+            renderGrid();
+            checkProgress();
+        }
+
+        function clearFilter() {
+            activeFilterValues = null;
+            wasFilterCleared = true;
+            closeModal('filterModal');
+            renderGrid();
+            showToast('Фільтр очищено!');
+            checkProgress();
+        }
+
+        function sortColumn(dir) {
+            showToast('Дані відсортовано.');
+        }
+
+        function toggleFreeze() {
+            frozenRow3 = !frozenRow3;
+            document.getElementById('freezeBtn').classList.toggle('active-tool', frozenRow3);
+            renderGrid();
+            showToast(frozenRow3 ? 'Шапку таблиці (рядок 3) закріплено!' : 'Закріплення областей знято.');
+            checkProgress();
+        }
+
+        function saveWorkbook() {
+            savedFile = true;
+            showToast('Файл «Реєстр_вхідної_кореспонденції_2026.xlsx» успішно збережено!');
+            checkProgress();
+        }
+
+        function switchRibbon(tabName, el) {
+            document.querySelectorAll('.ribbon-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.ribbon-panel').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('ribbon-' + tabName).classList.add('active');
+        }
+
+        function switchTask(num) {
+            currentTask = num;
+            document.querySelectorAll('.task-tab').forEach((t, idx) => {
+                t.classList.toggle('active', idx + 1 === num);
+            });
+            document.querySelectorAll('.task-card').forEach((c, idx) => {
+                c.classList.toggle('active', idx + 1 === num);
+            });
+        }
+
+        function nextTask() {
+            if (currentTask < 6) switchTask(currentTask + 1);
+        }
+
+        function prevTask() {
+            if (currentTask > 1) switchTask(currentTask - 1);
+        }
+
+        function showHint() {
+            const hints = {
+                1: 'Клікніть двічі по A1 та введіть заголовок. Потім затисніть мишку від A1 до F1 і натисніть «Об’єднати та в центрі». Для A3:F3 застосуйте заливку, перенесення тексту та «Усі межі».',
+                2: 'Введіть дані у рядки 4–7. Виділіть B4:B7 і у списку форматів оберіть «Дата (14.03.2012)». Натисніть «Автопідбір ширини».',
+                3: 'У D8 напишіть «РАЗОМ ДОКУМЕНТІВ:» і вирівняйте праворуч. У E8 введіть =СУМ(E4:E7) і натисніть Enter.',
+                4: 'У F4 введіть =ЯКЩО(B4<=СЬОГОДНІ();"Прострочено";"Вчасно") і натисніть Enter. Потім потягніть зелений квадратик у куті F4 вниз до F7.',
+                5: 'Виділіть F4:F7, натисніть «Умовне форматування» і натисніть ОК для слова «Прострочено».',
+                6: 'Виділіть A3:F3 ➔ вкладка «Дані» ➔ «Фільтр». Натисніть ▼ у стовпці C, оберіть «Департамент освіти», потім очистіть фільтр. На вкладці «Вигляд» натисніть «Закріпити області» та «Зберегти файл».'
+            };
+            showToast('💡 ' + hints[currentTask]);
+        }
+
+        function markStep(stepId, condition) {
+            const el = document.getElementById(stepId);
+            if (!el) return;
+            if (condition) {
+                el.classList.add('done');
+                completedSteps.add(stepId);
+            } else {
+                el.classList.remove('done');
+                completedSteps.delete(stepId);
+            }
+        }
+
+        function checkProgress() {
+            // Task 1
+            const titleOk = String(cells['A1'].val).trim().toUpperCase() === 'РЕЄСТР ВХІДНОЇ КОРЕСПОНДЕНЦІЇ СЕКРЕТАРЯ';
+            markStep('step-1-1', titleOk);
+            markStep('step-1-2', mergedA1F1);
+
+            const headersOk = ['A3','B3','C3','D3','E3','F3'].every(id => String(cells[id].val).trim().length >= 3);
+            markStep('step-1-3', headersOk);
+
+            const headerStyled = ['A3','B3','C3','D3','E3','F3'].every(id => cells[id].bg && cells[id].border);
+            markStep('step-1-4', headerStyled);
+
+            // Task 2
+            const dataRowsOk = [4,5,6,7].every(r => cells['B'+r].val && cells['C'+r].val && cells['E'+r].val);
+            markStep('step-2-1', dataRowsOk);
+
+            const dateFmtOk = ['B4','B5','B6','B7'].every(id => cells[id].numFormat === 'date');
+            markStep('step-2-2', dateFmtOk);
+            markStep('step-2-3', defaultWidths.C >= 200);
+
+            // Task 3
+            const totalLabelOk = String(cells['D8'].val).toUpperCase().includes('РАЗОМ');
+            markStep('step-3-1', totalLabelOk);
+            markStep('step-3-2', cells['E8'].val === 10 && String(cells['E8'].raw).startsWith('='));
+
+            // Task 4
+            const f4Ok = String(cells['F4'].raw).startsWith('=') && (cells['F4'].val === 'Прострочено' || cells['F4'].val === 'Звичайний');
+            markStep('step-4-1', f4Ok);
+            const f57Ok = ['F5','F6','F7'].every(id => String(cells[id].raw).startsWith('=') && cells[id].val && !String(cells[id].val).startsWith('#'));
+            markStep('step-4-2', f57Ok);
+
+            // Task 5
+            markStep('step-5-1', cfRule !== null);
+
+            // Task 6
+            markStep('step-6-1', filterEnabled);
+            markStep('step-6-2', wasFilteredOnce && wasFilterCleared);
+            markStep('step-6-3', frozenRow3 && savedFile);
+
+            // Update Task Tabs completion
+            const taskSteps = {
+                1: ['step-1-1','step-1-2','step-1-3','step-1-4'],
+                2: ['step-2-1','step-2-2','step-2-3'],
+                3: ['step-3-1','step-3-2'],
+                4: ['step-4-1','step-4-2'],
+                5: ['step-5-1'],
+                6: ['step-6-1','step-6-2','step-6-3']
+            };
+
+            const tabs = document.querySelectorAll('.task-tab');
+            for (let t = 1; t <= 6; t++) {
+                const allDone = taskSteps[t].every(s => completedSteps.has(s));
+                tabs[t - 1].classList.toggle('completed', allDone);
+            }
+
+            const totalSteps = 14;
+            const pct = Math.round((completedSteps.size / totalSteps) * 100);
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressText').textContent = `${pct}% (${completedSteps.size}/${totalSteps})`;
+
+            if (completedSteps.size === totalSteps) {
+                openModal('completeModal');
+            }
+        }
+
+        function autoFillDemoData() {
+            const sample = {
+                A1: 'РЕЄСТР ВХІДНОЇ КОРЕСПОНДЕНЦІЇ СЕКРЕТАРЯ',
+                A3: '№ з/п', B3: 'Дата надходження', C3: 'Кореспондент (Організація)',
+                D3: 'Короткий зміст', E3: 'Кількість документів', F3: 'Статус виконання',
+                A4: '1', B4: '20.09.2026', C4: 'ТОВ «Техно-Сервіс»', D4: 'Акт виконаних робіт', E4: '1',
+                A5: '2', B5: '22.09.2026', C5: 'ПАТ «КиївЕнерго»', D5: 'Договір постачання', E5: '4',
+                A6: '3', B6: '24.09.2026', C6: 'Департамент освіти', D6: 'Запит про звітність', E6: '3',
+                A7: '4', B7: '25.09.2026', C7: 'Міський Архів', D7: 'Лист-довідка', E7: '2'
+            };
+            Object.entries(sample).forEach(([id, val]) => {
+                cells[id].raw = val;
+            });
+            recalculateAll();
+            renderGrid();
+            checkProgress();
+            showToast('Базові текстові дані підставлено для швидкої перевірки!');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        initGrid();
+    </script>
+</body>
+</html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Файл index.html успішно створено.")
